@@ -1,0 +1,36 @@
+prometheus.exporter.unix "localhost" { }
+
+prometheus.scrape "default" {
+	scrape_interval = "10s"
+
+	targets    = prometheus.exporter.unix.localhost.targets
+	forward_to = [
+		prometheus.relabel.relabel.receiver,
+	]
+}
+
+prometheus.relabel "relabel" {
+	forward_to = [
+		prometheus.remote_write.grafanacloud.receiver,
+	]
+
+	rule {
+		replacement  = "hardcoded value"
+		target_label = "newlabel"
+	}
+}
+
+prometheus.remote_write "grafanacloud" {
+	external_labels = {
+		"anotherlabel" = "another hardcoded value",
+	}
+
+	endpoint {
+		url = "https://prometheus-prod-36-prod-us-west-0.grafana.net/api/prom/push"
+
+		basic_auth {
+			username = "1234567"
+			password = "glc_aBc="
+		}
+	}
+}

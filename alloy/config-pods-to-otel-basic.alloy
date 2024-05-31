@@ -1,0 +1,22 @@
+// see `prometheus-example-app-metrics.yaml`
+prometheus.operator.podmonitors "pods" {
+	forward_to = [otelcol.receiver.prometheus.default.receiver]
+}
+
+otelcol.receiver.prometheus "default" {
+	output {
+		metrics = [otelcol.exporter.otlphttp.default.input]
+	}
+}
+
+otelcol.auth.basic "default" {
+	username = "1234567"
+	password = "glc_aBc="
+}
+
+otelcol.exporter.otlphttp "default" {
+	client {
+		endpoint = "https://otlp-gateway-prod-us-west-0.grafana.net/otlp"
+		auth     = otelcol.auth.basic.default.handler
+	}
+}
