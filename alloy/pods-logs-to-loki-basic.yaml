@@ -28,8 +28,8 @@ spec:
 apiVersion: monitoring.grafana.com/v1alpha2
 kind: PodLogs
 metadata:
-  name: kubernetes-pods
-  namespace: alloy
+  name: docker-log-generator
+  namespace: docker-log-generator
 spec:
   namespaceSelector:
     matchExpressions:
