@@ -16,7 +16,7 @@ otelcol.receiver.prometheus "default" {
 }
 
 otelcol.auth.basic "default" {
-	username = "927071"
+	username = "1234567"
 	password = "glc_aBc="
 }
 
