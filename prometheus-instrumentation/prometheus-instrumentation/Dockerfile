@@ -6,6 +6,7 @@ RUN go build -o prometheus-instrumentation .
 
 FROM alpine:latest
 RUN apk add libc6-compat
+RUN apk add curl
 RUN mkdir /app
 COPY --from=builder /app/prometheus-instrumentation /app/prometheus-instrumentation 
 ENTRYPOINT ["/app/prometheus-instrumentation"]
