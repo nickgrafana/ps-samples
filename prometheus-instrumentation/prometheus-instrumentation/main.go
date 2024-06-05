@@ -38,7 +38,7 @@ func randFloat(min, max float64) float64 {
 	return math.Round((min+rand.Float64()*(max-min))*1000) / 1000
 }
 func randInt() float64 {
-	return float64(rand.Int31n(102400))
+	return float64(rand.Int31n(1000000))
 }
 
 var (
