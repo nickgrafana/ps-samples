@@ -1,0 +1,15 @@
+// see `pods-logs-to-loki-basic.yaml`
+loki.source.podlogs "default" {
+  forward_to = [loki.write.grafana.receiver]
+}
+
+loki.write "grafanacloud" {
+  endpoint {
+    url = "https://logs-prod-021.grafana.net/loki/api/v1/push"
+
+    basic_auth {
+      username = "123456"
+      password = "glc_aBc="
+    }
+  }
+}
