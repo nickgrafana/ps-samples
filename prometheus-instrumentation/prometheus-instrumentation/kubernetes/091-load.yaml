@@ -1,0 +1,60 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pi-load
+  namespace: pi
+data:
+  conceal.sh: |-
+    #!/bin/sh
+    while true
+        do
+            N=$((1 + $RANDOM % 100))
+            C=$((1 + $RANDOM % 10))
+            S=$((1 + $RANDOM % 5))
+            echo $N $C $S
+            ab -n $N -c $C -l -d -S -q http://pi-frontend:8080/conceal
+            sleep $S
+        done
+  show.sh: |-
+    #!/bin/sh
+    while true
+        do
+            N=$((1 + $RANDOM % 100))
+            C=$((1 + $RANDOM % 10))
+            S=$((1 + $RANDOM % 5))
+            echo $N $C $S
+            ab -n $N -c $C -l -d -S -q http://pi-frontend:8080/show
+            sleep $S
+        done
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: pi
+  name: pi-load
+  labels:
+    app: pi-load
+spec:
+  selector:
+    matchLabels:
+      app: pi-load
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: pi-load
+    spec:
+      containers:
+        - name: pi-load
+          image: alpine:latest
+          command: ["/bin/sh"]
+          args: ["-c", "apk add curl && apk add apache2-utils && apk add parallel && mkdir -p /root/.parallel && touch /root/.parallel/will-cite && parallel /bin/sh ::: /etc/config/show.sh /etc/config/conceal.sh"]
+          volumeMounts:
+          - name: config-volume
+            mountPath: /etc/config
+      volumes:
+        - name: config-volume
+          configMap:
+            name: pi-load
