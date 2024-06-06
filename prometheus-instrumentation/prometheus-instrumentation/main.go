@@ -15,6 +15,8 @@ import (
 	"time"
 )
 
+const maxSleep = 0.35
+
 func init() {
 	log.SetFormatter(&log.JSONFormatter{})
 	log.SetOutput(os.Stderr)
@@ -37,14 +39,22 @@ func GetEnv(key string) string {
 func randFloat(min, max float64) float64 {
 	return math.Round((min+rand.Float64()*(max-min))*1000) / 1000
 }
-func randInt() float64 {
-	return float64(rand.Int31n(1000000))
-}
 
 var (
 	summary = prometheus.NewSummaryVec(prometheus.SummaryOpts{
 		Name: "request_summary_seconds",
 		Help: "Time taken to complete a request.",
+		Objectives: map[float64]float64{
+			0.5:  0.05,
+			0.9:  0.01,
+			0.99: 0.001,
+		},
+	},
+		[]string{"path"},
+	)
+	summaryMemory = prometheus.NewSummaryVec(prometheus.SummaryOpts{
+		Name: "memory_summary_bytes",
+		Help: "Memory usage of requests.",
 		Objectives: map[float64]float64{
 			0.5:  0.05,
 			0.9:  0.01,
@@ -74,12 +84,19 @@ var (
 	},
 		[]string{"path"},
 	)
+	histogramMemory = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Name:    "memory_bytes",
+		Help:    "Memory usage of requests.",
+		Buckets: prometheus.LinearBuckets(0, 250000, 5),
+	},
+		[]string{"path"},
+	)
 )
 
 func measure(service string, local, total float64) {
 
 	total = math.Round(total*100) / 100
-	memory := randInt()
+	memory := math.Round((1000000 * local) / maxSleep)
 
 	log.WithFields(log.Fields{
 		"local":  local,
@@ -89,6 +106,8 @@ func measure(service string, local, total float64) {
 	counter.With(prometheus.Labels{"path": service}).Inc()
 	histogram.With(prometheus.Labels{"path": service}).Observe(total)
 	summary.With(prometheus.Labels{"path": service}).Observe(total)
+	summaryMemory.With(prometheus.Labels{"path": service}).Observe(memory)
+	histogramMemory.With(prometheus.Labels{"path": service}).Observe(memory)
 	gauge.With(prometheus.Labels{"path": service}).Set(memory)
 
 }
@@ -96,7 +115,7 @@ func measure(service string, local, total float64) {
 // databases
 func db(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
-	sleep := time.Duration(randFloat(0, 0.35)*1000) * time.Millisecond
+	sleep := time.Duration(randFloat(0, maxSleep)*1000) * time.Millisecond
 	time.Sleep(sleep)
 
 	str := ""
@@ -117,7 +136,7 @@ func db(w http.ResponseWriter, r *http.Request) {
 // backends
 func encode(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
-	sleep := time.Duration(randFloat(0, 0.35)*1000) * time.Millisecond
+	sleep := time.Duration(randFloat(0, maxSleep)*1000) * time.Millisecond
 	time.Sleep(sleep)
 
 	var str string
@@ -140,7 +159,7 @@ func encode(w http.ResponseWriter, r *http.Request) {
 
 func decode(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
-	sleep := time.Duration(randFloat(0, 0.35)*1000) * time.Millisecond
+	sleep := time.Duration(randFloat(0, maxSleep)*1000) * time.Millisecond
 	time.Sleep(sleep)
 	var s string
 	err := requests.
@@ -162,7 +181,7 @@ func decode(w http.ResponseWriter, r *http.Request) {
 // frontend
 func conceal(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
-	sleep := time.Duration(randFloat(0, 0.35)*1000) * time.Millisecond
+	sleep := time.Duration(randFloat(0, maxSleep)*1000) * time.Millisecond
 	time.Sleep(sleep)
 
 	var s string
@@ -185,7 +204,7 @@ func conceal(w http.ResponseWriter, r *http.Request) {
 
 func show(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
-	sleep := time.Duration(randFloat(0, 0.35)*1000) * time.Millisecond
+	sleep := time.Duration(randFloat(0, maxSleep)*1000) * time.Millisecond
 	time.Sleep(sleep)
 
 	var s string
@@ -213,8 +232,10 @@ func main() {
 	reg := prometheus.NewRegistry()
 	reg.MustRegister(counter)
 	reg.MustRegister(histogram)
+	reg.MustRegister(histogramMemory)
 	reg.MustRegister(gauge)
 	reg.MustRegister(summary)
+	reg.MustRegister(summaryMemory)
 
 	http.HandleFunc("/conceal", conceal)
 	http.HandleFunc("/show", show)
