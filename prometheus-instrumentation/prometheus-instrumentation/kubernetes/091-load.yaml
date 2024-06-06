@@ -10,7 +10,7 @@ data:
     while true
         do
             N=$((1 + $RANDOM % 100))
-            C=$((1 + $RANDOM % 10))
+            C=$((1 + $RANDOM % 5))
             S=$((1 + $RANDOM % 5))
             echo $N $C $S
             ab -n $N -c $C -l -d -S -q http://pi-frontend:8080/conceal
@@ -21,7 +21,7 @@ data:
     while true
         do
             N=$((1 + $RANDOM % 100))
-            C=$((1 + $RANDOM % 10))
+            C=$((1 + $RANDOM % 5))
             S=$((1 + $RANDOM % 5))
             echo $N $C $S
             ab -n $N -c $C -l -d -S -q http://pi-frontend:8080/show
