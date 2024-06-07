@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - name: pi-encode
-        image: nickolivera296/prometheus-instrumentation:b9af6ac2b091
+        image: nickolivera296/prometheus-instrumentation:a20be3817748
         env:
           - name: ENCODE_HOST
             value: "pi-encode.pi.svc.cluster.local:8080"
