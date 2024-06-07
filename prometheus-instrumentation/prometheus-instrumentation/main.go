@@ -52,6 +52,17 @@ var (
 	},
 		[]string{"path"},
 	)
+	summaryLocal = prometheus.NewSummaryVec(prometheus.SummaryOpts{
+		Name: "request_local_summary_seconds",
+		Help: "Time taken to complete a request.",
+		Objectives: map[float64]float64{
+			0.5:  0.05,
+			0.9:  0.01,
+			0.99: 0.001,
+		},
+	},
+		[]string{"path"},
+	)
 	summaryMemory = prometheus.NewSummaryVec(prometheus.SummaryOpts{
 		Name: "memory_summary_bytes",
 		Help: "Memory usage of requests.",
@@ -84,6 +95,13 @@ var (
 	},
 		[]string{"path"},
 	)
+	histogramLocal = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Name:    "request_local_seconds",
+		Help:    "Time taken to complete a request.",
+		Buckets: prometheus.LinearBuckets(0, 0.250, 5),
+	},
+		[]string{"path"},
+	)
 	histogramMemory = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "memory_bytes",
 		Help:    "Memory usage of requests.",
@@ -103,12 +121,16 @@ func measure(service string, local, total float64) {
 		"total":  total,
 		"memory": memory,
 	}).Info(service)
-	counter.With(prometheus.Labels{"path": service}).Inc()
-	histogram.With(prometheus.Labels{"path": service}).Observe(total)
+	counter.With(prometheus.Labels{"path": service}).Inc()     //request number
+	gauge.With(prometheus.Labels{"path": service}).Set(memory) //memory over time
+
 	summary.With(prometheus.Labels{"path": service}).Observe(total)
 	summaryMemory.With(prometheus.Labels{"path": service}).Observe(memory)
+	summaryLocal.With(prometheus.Labels{"path": service}).Observe(local)
+
+	histogram.With(prometheus.Labels{"path": service}).Observe(total)
 	histogramMemory.With(prometheus.Labels{"path": service}).Observe(memory)
-	gauge.With(prometheus.Labels{"path": service}).Set(memory)
+	histogramLocal.With(prometheus.Labels{"path": service}).Observe(local)
 
 }
 
@@ -233,9 +255,11 @@ func main() {
 	reg.MustRegister(counter)
 	reg.MustRegister(histogram)
 	reg.MustRegister(histogramMemory)
+	reg.MustRegister(histogramLocal)
 	reg.MustRegister(gauge)
 	reg.MustRegister(summary)
 	reg.MustRegister(summaryMemory)
+	reg.MustRegister(summaryLocal)
 
 	http.HandleFunc("/conceal", conceal)
 	http.HandleFunc("/show", show)
