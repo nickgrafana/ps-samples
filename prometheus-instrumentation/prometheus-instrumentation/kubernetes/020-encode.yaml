@@ -1,0 +1,47 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: pi
+  name: pi-encode
+  labels:
+    app: pi-encode
+spec:
+  selector:
+    matchLabels:
+      app: pi-encode
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: pi-encode
+    spec:
+      containers:
+      - name: pi-encode
+        image: nickolivera296/prometheus-instrumentation:f06dbfd19d08
+        env:
+          - name: ENCODE_HOST
+            value: "pi-encode.pi.svc.cluster.local:8080"
+          - name: DECODE_HOST
+            value: "pi-decode.pi.svc.cluster.local:8080"
+          - name: DB_HOST
+            value: "pi-db.pi.svc.cluster.local:8080"
+        ports:
+        - name: web
+          containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: pi-encode
+  name: pi-encode
+  namespace: pi
+spec:
+  ports:
+  - name: web
+    port: 8080
+    protocol: TCP
+    targetPort: web
+  selector:
+    app: pi-encode

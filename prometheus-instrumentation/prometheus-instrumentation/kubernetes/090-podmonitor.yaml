@@ -1,0 +1,17 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  namespace: pi
+  labels:
+    app.kubernetes.io/name: pi
+  name: pi
+spec:
+  selector:
+    matchExpressions:
+      - {key: "app", operator: In, values: ["pi-db","pi-decode","pi-encode","pi-frontend"]}
+  namespaceSelector:
+    matchNames:
+      - pi
+  podMetricsEndpoints:
+    - port: web
