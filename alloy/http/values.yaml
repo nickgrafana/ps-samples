@@ -1,0 +1,21 @@
+alloy:
+  stabilityLevel: "public-preview"
+  configMap:
+    content: |-
+      logging {
+        level  = "debug"
+        format = "logfmt"
+      }
+
+      import.http "mydefault" {
+        url = "https://domain.cloudfront.net/pub/module-default.alloy"
+      }
+
+      mydefault.default "main" {
+        grafana_username = "abcdefg"
+        grafana_password = "glc_123"
+        grafana_host = "https://prometheus-prod-AB-prod-us-west-0.grafana.net/api/prom/push"
+        loki_username = "abcdef"
+        loki_password = "glc_123"
+        loki_host = "https://logs-prod-ABC.grafana.net/loki/api/v1/push"
+      }

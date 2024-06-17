@@ -1,0 +1,43 @@
+declare "default" {
+	argument "grafana_username" { }
+
+	argument "grafana_password" { }
+
+	argument "grafana_host" { }
+
+	argument "loki_username" { }
+
+	argument "loki_password" { }
+
+	argument "loki_host" { }
+
+	loki.source.podlogs "default" {
+		forward_to = [loki.write.grafanacloud.receiver]
+	}
+
+	prometheus.operator.podmonitors "pods" {
+		forward_to = [prometheus.remote_write.grafanacloud.receiver]
+	}
+
+	loki.write "grafanacloud" {
+		endpoint {
+			url = argument.loki_host.value
+
+			basic_auth {
+				username = argument.loki_username.value
+				password = argument.loki_password.value
+			}
+		}
+	}
+
+	prometheus.remote_write "grafanacloud" {
+		endpoint {
+			url = argument.grafana_host.value
+
+			basic_auth {
+				username = argument.grafana_username.value
+				password = argument.grafana_password.value
+			}
+		}
+	}
+}
