@@ -9,7 +9,7 @@ data:
     #!/bin/sh
     while true
         do
-            N=$((1 + $RANDOM % 100))
+            N=$((1 + $RANDOM % 2))
             C=$((1 + $RANDOM % 5))
             S=$((1 + $RANDOM % 5))
             echo $N $C $S
@@ -20,14 +20,24 @@ data:
     #!/bin/sh
     while true
         do
-            N=$((1 + $RANDOM % 100))
+            N=$((1 + $RANDOM % 2))
             C=$((1 + $RANDOM % 5))
             S=$((1 + $RANDOM % 5))
             echo $N $C $S
             ab -n $N -c $C -l -d -S -q http://pi-frontend:8080/show
             sleep $S
         done
-
+  logs.sh: |-
+    #!/bin/sh
+    while true
+        do
+            N=$((1 + $RANDOM % 20))
+            C=$((1 + $RANDOM % 5))
+            S=$((1 + $RANDOM % 5))
+            echo $N $C $S
+            ab -n $N -c $C -l -d -S -q http://pi-logs.pi-logs.svc.cluster.local:8080/logs
+            sleep $S
+        done
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -50,7 +60,7 @@ spec:
         - name: pi-load
           image: alpine:latest
           command: ["/bin/sh"]
-          args: ["-c", "apk add curl && apk add apache2-utils && apk add parallel && mkdir -p /root/.parallel && touch /root/.parallel/will-cite && parallel /bin/sh ::: /etc/config/show.sh /etc/config/conceal.sh"]
+          args: ["-c", "apk add curl && apk add apache2-utils && apk add parallel && mkdir -p /root/.parallel && touch /root/.parallel/will-cite && parallel -j 3 /bin/sh ::: /etc/config/logs.sh /etc/config/show.sh /etc/config/conceal.sh"]
           volumeMounts:
           - name: config-volume
             mountPath: /etc/config
