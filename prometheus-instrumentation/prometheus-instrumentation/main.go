@@ -94,6 +94,20 @@ var (
 		},
 		[]string{"path"},
 	)
+	errorCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "paths_total_error_count",
+			Help: "Path error requested counter.",
+		},
+		[]string{"path"},
+	)
+	okCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "paths_total_ok_count",
+			Help: "Path ok requested counter.",
+		},
+		[]string{"path"},
+	)
 	histogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "request_seconds",
 		Help:    "Time taken to complete a request.",
@@ -117,18 +131,19 @@ var (
 	)
 )
 
-func measure(service string, local, total float64) {
+func measure(service string, timeSpent, totalTimeSpent float64) {
 
-	total = math.Round(total*100) / 100
-	memory := math.Round((1000000 * local) / MaxSleep)
+	totalTimeSpent = math.Round(totalTimeSpent*100) / 100
+	memory := math.Round((1000000 * timeSpent) / MaxSleep)
 
 	if MaxError >= rand.Float64() {
-		fmt.Println(fmt.Sprintf("%s - ERROR %s: local: %f, total: %f, memory: %f", time.Now().Format(time.RFC3339), service, local, total, memory))
+		errorCounter.With(prometheus.Labels{"path": service}).Inc()
+		fmt.Println(fmt.Sprintf("%s - ERROR %s: time_spent: %f, total_time_spent: %f, memory: %f", time.Now().Format(time.RFC3339), service, timeSpent, totalTimeSpent, memory))
 		log.SetFormatter(&log.JSONFormatter{})
 		log.WithFields(log.Fields{
-			"local":  local,
-			"total":  total,
-			"memory": memory,
+			"time_spent":       timeSpent,
+			"total_time_spent": totalTimeSpent,
+			"memory":           memory,
 		}).Error(service)
 
 		log.SetFormatter(&log.TextFormatter{
@@ -136,39 +151,55 @@ func measure(service string, local, total float64) {
 			FullTimestamp: true,
 		})
 		log.WithFields(log.Fields{
-			"local":  local,
-			"total":  total,
-			"memory": memory,
+			"time_spent":       timeSpent,
+			"total_time_spent": totalTimeSpent,
+			"memory":           memory,
 		}).Error(service)
 	} else {
-		fmt.Println(fmt.Sprintf("%s - OK %s: local: %f, total: %f, memory: %f", time.Now().Format(time.RFC3339), service, local, total, memory))
+		okCounter.With(prometheus.Labels{"path": service}).Inc()
+		fmt.Println(fmt.Sprintf("%s - OK %s: time_spent: %f, total_time_spent: %f, memory: %f", time.Now().Format(time.RFC3339), service, timeSpent, totalTimeSpent, memory))
 		log.SetFormatter(&log.JSONFormatter{})
 		log.WithFields(log.Fields{
-			"local":  local,
-			"total":  total,
-			"memory": memory,
+			"time_spent":       timeSpent,
+			"total_time_spent": totalTimeSpent,
+			"memory":           memory,
 		}).Info(service)
 		log.SetFormatter(&log.TextFormatter{
 			DisableColors: true,
 			FullTimestamp: true,
 		})
 		log.WithFields(log.Fields{
-			"local":  local,
-			"total":  total,
-			"memory": memory,
+			"time_spent":       timeSpent,
+			"total_time_spent": totalTimeSpent,
+			"memory":           memory,
 		}).Info(service)
 	}
 
 	counter.With(prometheus.Labels{"path": service}).Inc()     //request number
 	gauge.With(prometheus.Labels{"path": service}).Set(memory) //memory over time
 
-	summary.With(prometheus.Labels{"path": service}).Observe(total)
+	summary.With(prometheus.Labels{"path": service}).Observe(totalTimeSpent)
 	summaryMemory.With(prometheus.Labels{"path": service}).Observe(memory)
-	summaryLocal.With(prometheus.Labels{"path": service}).Observe(local)
+	summaryLocal.With(prometheus.Labels{"path": service}).Observe(timeSpent)
 
-	histogram.With(prometheus.Labels{"path": service}).Observe(total)
+	histogram.With(prometheus.Labels{"path": service}).Observe(totalTimeSpent)
 	histogramMemory.With(prometheus.Labels{"path": service}).Observe(memory)
-	histogramLocal.With(prometheus.Labels{"path": service}).Observe(local)
+	histogramLocal.With(prometheus.Labels{"path": service}).Observe(timeSpent)
+
+}
+
+func measure_nolog(service string, timeSpent, totalTimeSpent, memory float64) {
+
+	counter.With(prometheus.Labels{"path": service}).Inc()     //request number
+	gauge.With(prometheus.Labels{"path": service}).Set(memory) //memory over time
+
+	summary.With(prometheus.Labels{"path": service}).Observe(totalTimeSpent)
+	summaryMemory.With(prometheus.Labels{"path": service}).Observe(memory)
+	summaryLocal.With(prometheus.Labels{"path": service}).Observe(timeSpent)
+
+	histogram.With(prometheus.Labels{"path": service}).Observe(totalTimeSpent)
+	histogramMemory.With(prometheus.Labels{"path": service}).Observe(memory)
+	histogramLocal.With(prometheus.Labels{"path": service}).Observe(timeSpent)
 
 }
 
@@ -377,10 +408,62 @@ func logs(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func staticLog(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
+
+	minMemory := 1
+	maxMemory := 128000
+
+	minTime := 0.01
+	maxTime := 1.05
+	memory := rand.Intn(maxMemory-minMemory+1) + minMemory
+	totalTime := minTime + rand.Float64()*(maxTime-minTime)
+	localTime := minTime + rand.Float64()*(maxTime-minTime)
+	measure_nolog("static_log", localTime, totalTime, float64(memory))
+
+	log.SetFormatter(&log.JSONFormatter{})
+
+	log.SetLevel(log.InfoLevel)
+	h := make([]string, 0)
+	h = append(h,
+		"node1",
+		"node2",
+		"node3",
+		"node4",
+		"node5",
+		"node6")
+
+	chooser, _ := weightedrand.NewChooser(
+		weightedrand.NewChoice("200", 8),
+		weightedrand.NewChoice("201", 2),
+	)
+	x := log.WithFields(log.Fields{
+		"service_time":    strconv.FormatInt(time.Now().UTC().UnixNano(), 10),
+		"server_pid":      rand.Int31n(1000),
+		"server_hostname": h[rand.Intn(len(h))],
+		"http_method":     "GET",
+		"http_route":      "/view",
+		"http_code":       chooser.Pick(),
+		"response_time":   totalTime,
+		"memory_usage":    memory,
+	})
+
+	x.Info()
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	res := AutoGenerated{strconv.FormatInt(time.Now().UTC().UnixNano(), 10), time.Since(start).Seconds()}
+	err := json.NewEncoder(w).Encode(res)
+	if err != nil {
+		panic(err)
+	}
+
+}
 func main() {
 
 	reg := prometheus.NewRegistry()
 	reg.MustRegister(counter)
+	reg.MustRegister(okCounter)
+	reg.MustRegister(errorCounter)
 	reg.MustRegister(histogram)
 	reg.MustRegister(histogramMemory)
 	reg.MustRegister(histogramLocal)
@@ -395,6 +478,7 @@ func main() {
 	http.HandleFunc("/decode", decode)
 	http.HandleFunc("/db", db)
 	http.HandleFunc("/logs", logs)
+	http.HandleFunc("/static_log", staticLog)
 	http.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{Registry: reg}))
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
