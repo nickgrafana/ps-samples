@@ -47,7 +47,7 @@ func randFloat(min, max float64) float64 {
 var (
 	timeSpentSummary = prometheus.NewSummaryVec(prometheus.SummaryOpts{
 		Name: "time_spent_summary_seconds",
-		Help: "Time taken to complete a request.",
+		Help: "Time spent waiting to complete request.",
 		Objectives: map[float64]float64{
 			0.5:  0.05,
 			0.9:  0.01,
