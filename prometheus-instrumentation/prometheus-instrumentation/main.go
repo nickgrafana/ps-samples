@@ -24,7 +24,6 @@ var MaxError, _ = strconv.ParseFloat(GetEnv("MAX_ERR", "0.065"), 64)
 func init() {
 
 	log.SetOutput(os.Stderr)
-	// log.SetReportCaller(true)
 
 }
 
