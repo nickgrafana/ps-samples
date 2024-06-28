@@ -22,7 +22,6 @@ var MaxSleep, _ = strconv.ParseFloat(GetEnv("MAX_SLEEP", "0.35"), 64)
 var MaxError, _ = strconv.ParseFloat(GetEnv("MAX_ERR", "0.065"), 64)
 
 func init() {
-	rand.Seed(time.Now().Unix())
 
 	log.SetOutput(os.Stderr)
 	// log.SetReportCaller(true)
