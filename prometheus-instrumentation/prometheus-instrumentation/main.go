@@ -45,8 +45,8 @@ func randFloat(min, max float64) float64 {
 }
 
 var (
-	summary = prometheus.NewSummaryVec(prometheus.SummaryOpts{
-		Name: "request_summary_seconds",
+	timeTakenSummary = prometheus.NewSummaryVec(prometheus.SummaryOpts{
+		Name: "time_taken_summary_seconds",
 		Help: "Time taken to complete a request.",
 		Objectives: map[float64]float64{
 			0.5:  0.05,
@@ -176,7 +176,7 @@ func measure(service string, timeSpent, totalTimeSpent float64) {
 	counter.With(prometheus.Labels{"path": service}).Inc()     //request number
 	gauge.With(prometheus.Labels{"path": service}).Set(memory) //memory over time
 
-	summary.With(prometheus.Labels{"path": service}).Observe(totalTimeSpent)
+	timeTakenSummary.With(prometheus.Labels{"path": service}).Observe(totalTimeSpent)
 	summaryMemory.With(prometheus.Labels{"path": service}).Observe(memory)
 	summaryLocal.With(prometheus.Labels{"path": service}).Observe(timeSpent)
 
@@ -191,7 +191,7 @@ func measure_nolog(service string, timeSpent, totalTimeSpent, memory float64) {
 	counter.With(prometheus.Labels{"path": service}).Inc()     //request number
 	gauge.With(prometheus.Labels{"path": service}).Set(memory) //memory over time
 
-	summary.With(prometheus.Labels{"path": service}).Observe(totalTimeSpent)
+	timeTakenSummary.With(prometheus.Labels{"path": service}).Observe(totalTimeSpent)
 	summaryMemory.With(prometheus.Labels{"path": service}).Observe(memory)
 	summaryLocal.With(prometheus.Labels{"path": service}).Observe(timeSpent)
 
@@ -466,7 +466,7 @@ func main() {
 	reg.MustRegister(histogramMemory)
 	reg.MustRegister(histogramLocal)
 	reg.MustRegister(gauge)
-	reg.MustRegister(summary)
+	reg.MustRegister(timeTakenSummary)
 	reg.MustRegister(summaryMemory)
 	reg.MustRegister(summaryLocal)
 
