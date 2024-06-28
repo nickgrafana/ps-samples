@@ -26,7 +26,6 @@ spec:
     targetLabel: hardcodedlabel
     replacement: hardcodedvalue
 ---
----
 apiVersion: monitoring.grafana.com/v1alpha2
 kind: PodLogs
 metadata:

@@ -9,9 +9,9 @@ data:
     #!/bin/sh
     while true
         do
-            N=$((1 + $RANDOM % 2))
-            C=$((1 + $RANDOM % 5))
-            S=$((1 + $RANDOM % 5))
+            N=$((1 + $RANDOM % 10))
+            C=$((1 + $RANDOM % 3))
+            S=$((1 + $RANDOM % 3))
             echo $N $C $S
             ab -n $N -c $C -l -d -S -q http://pi-frontend:8080/conceal
             sleep $S
@@ -20,9 +20,9 @@ data:
     #!/bin/sh
     while true
         do
-            N=$((1 + $RANDOM % 2))
-            C=$((1 + $RANDOM % 5))
-            S=$((1 + $RANDOM % 5))
+            N=$((1 + $RANDOM % 10))
+            C=$((1 + $RANDOM % 3))
+            S=$((1 + $RANDOM % 3))
             echo $N $C $S
             ab -n $N -c $C -l -d -S -q http://pi-frontend:8080/show
             sleep $S
@@ -31,11 +31,22 @@ data:
     #!/bin/sh
     while true
         do
-            N=$((1 + $RANDOM % 20))
-            C=$((1 + $RANDOM % 5))
-            S=$((1 + $RANDOM % 5))
+            N=$((1 + $RANDOM % 17))
+            C=$((1 + $RANDOM % 17))
+            S=$((1 + $RANDOM % 3))
             echo $N $C $S
             ab -n $N -c $C -l -d -S -q http://pi-logs.pi-logs.svc.cluster.local:8080/logs
+            # sleep $S
+        done
+  logs_custom.sh: |-
+    #!/bin/sh
+    while true
+        do
+            N=10
+            C=10
+            S=10
+            echo $N $C $S
+            ab -n $N -c $C -l -d -S -q http://pi-logs-custom3.pi-logs-custom3.svc.cluster.local:8080/static_log
             sleep $S
         done
 ---
@@ -60,7 +71,7 @@ spec:
         - name: pi-load
           image: alpine:latest
           command: ["/bin/sh"]
-          args: ["-c", "apk add curl && apk add apache2-utils && apk add parallel && mkdir -p /root/.parallel && touch /root/.parallel/will-cite && parallel -j 3 /bin/sh ::: /etc/config/logs.sh /etc/config/show.sh /etc/config/conceal.sh"]
+          args: ["-c", "apk add curl && apk add apache2-utils && apk add parallel && mkdir -p /root/.parallel && touch /root/.parallel/will-cite && parallel -j 4 /bin/sh ::: /etc/config/logs_custom.sh /etc/config/logs.sh /etc/config/show.sh /etc/config/conceal.sh"]
           volumeMounts:
           - name: config-volume
             mountPath: /etc/config
