@@ -2,30 +2,30 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: pi-logs
+  name: pi-logs-custom3
   labels:
-    name: pi-logs
+    name: pi-logs-custom3
 
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  namespace: pi-logs
-  name: pi-logs
+  namespace: pi-logs-custom3
+  name: pi-logs-custom3
   labels:
-    app: pi-logs
+    app: pi-logs-custom3
 spec:
   selector:
     matchLabels:
-      app: pi-logs
+      app: pi-logs-custom3
   replicas: 2
   template:
     metadata:
       labels:
-        app: pi-logs
+        app: pi-logs-custom3
     spec:
       containers:
-      - name: pi-logs
+      - name: pi-logs-custom3
         image: nickolivera296/prometheus-instrumentation:7b13fb063908
         env:
           - name: ENCODE_HOST
@@ -42,9 +42,9 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: pi-logs
-  name: pi-logs
-  namespace: pi-logs
+    app: pi-logs-custom3
+  name: pi-logs-custom3
+  namespace: pi-logs-custom3
 spec:
   ports:
   - name: web
@@ -52,25 +52,41 @@ spec:
     protocol: TCP
     targetPort: web
   selector:
-    app: pi-logs
----
+    app: pi-logs-custom3
 ---
 apiVersion: monitoring.grafana.com/v1alpha2
 kind: PodLogs
 metadata:
-  name: pi-logs
-  namespace: pi-logs
+  name: pi-logs-custom3
+  namespace: pi-logs-custom3
 spec:
   namespaceSelector:
     matchExpressions:
-      - {key: "kubernetes.io/metadata.name", operator: In, values: ["pi-logs"]}
+      - {key: "kubernetes.io/metadata.name", operator: In, values: ["pi-logs-custom3"]}
 
   selector:
     matchExpressions:
-      - {key: "app", operator: In, values: ["pi-logs"]}
+      - {key: "app", operator: In, values: ["pi-logs-custom3"]}
 
   relabelings:
   - action: replace
     sourceLabels:
     - __meta_kubernetes_namespace
     targetLabel: namespace
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  namespace: pi-logs-custom3
+  labels:
+    app.kubernetes.io/name: pi-logs-custom3
+  name: pi-logs-custom3
+spec:
+  selector:
+    matchExpressions:
+      - {key: "app", operator: In, values: ["pi-logs-custom3"]}
+  namespaceSelector:
+    matchNames:
+      - pi-logs-custom3
+  podMetricsEndpoints:
+    - port: web
