@@ -56,9 +56,9 @@ var (
 	},
 		[]string{"path"},
 	)
-	summaryLocal = prometheus.NewSummaryVec(prometheus.SummaryOpts{
-		Name: "request_local_summary_seconds",
-		Help: "Time taken to complete a request.",
+	totalTimeSpentSummary = prometheus.NewSummaryVec(prometheus.SummaryOpts{
+		Name: "total_time_spent_summary_seconds",
+		Help: "Total time spent waiting to complete request.",
 		Objectives: map[float64]float64{
 			0.5:  0.05,
 			0.9:  0.01,
@@ -178,7 +178,7 @@ func measure(service string, timeSpent, totalTimeSpent float64) {
 
 	timeSpentSummary.With(prometheus.Labels{"path": service}).Observe(totalTimeSpent)
 	summaryMemory.With(prometheus.Labels{"path": service}).Observe(memory)
-	summaryLocal.With(prometheus.Labels{"path": service}).Observe(timeSpent)
+	totalTimeSpentSummary.With(prometheus.Labels{"path": service}).Observe(timeSpent)
 
 	histogram.With(prometheus.Labels{"path": service}).Observe(totalTimeSpent)
 	histogramMemory.With(prometheus.Labels{"path": service}).Observe(memory)
@@ -193,7 +193,7 @@ func measure_nolog(service string, timeSpent, totalTimeSpent, memory float64) {
 
 	timeSpentSummary.With(prometheus.Labels{"path": service}).Observe(totalTimeSpent)
 	summaryMemory.With(prometheus.Labels{"path": service}).Observe(memory)
-	summaryLocal.With(prometheus.Labels{"path": service}).Observe(timeSpent)
+	totalTimeSpentSummary.With(prometheus.Labels{"path": service}).Observe(timeSpent)
 
 	histogram.With(prometheus.Labels{"path": service}).Observe(totalTimeSpent)
 	histogramMemory.With(prometheus.Labels{"path": service}).Observe(memory)
@@ -468,7 +468,7 @@ func main() {
 	reg.MustRegister(gauge)
 	reg.MustRegister(timeSpentSummary)
 	reg.MustRegister(summaryMemory)
-	reg.MustRegister(summaryLocal)
+	reg.MustRegister(totalTimeSpentSummary)
 
 	http.HandleFunc("/conceal", conceal)
 	http.HandleFunc("/show", show)
