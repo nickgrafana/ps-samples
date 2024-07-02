@@ -438,15 +438,14 @@ func staticLog(w http.ResponseWriter, r *http.Request) {
 		weightedrand.NewChoice("201", 2),
 	)
 	x := log.WithFields(log.Fields{
-		"service_time":         strconv.FormatInt(time.Now().UTC().UnixNano(), 10),
-		"server_pid":           rand.Int31n(1000),
-		"server_hostname":      h[rand.Intn(len(h))],
-		"http_method":          "GET",
-		"http_route":           "/view",
-		"http_code":            chooser.Pick(),
-		"response_time":        totalTime,
-		"response_time_string": fmt.Sprintf("%fs", totalTime),
-		"memory_usage":         memory,
+		"service_time":    strconv.FormatInt(time.Now().UTC().UnixNano(), 10),
+		"server_pid":      rand.Int31n(1000),
+		"server_hostname": h[rand.Intn(len(h))],
+		"http_method":     "GET",
+		"http_route":      "/view",
+		"http_code":       chooser.Pick(),
+		"response_time":   totalTime,
+		"memory_usage":    memory,
 	})
 
 	x.Info()
