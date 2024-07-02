@@ -1,0 +1,27 @@
+---
+apiVersion: monitoring.grafana.com/v1alpha2
+kind: PodLogs
+metadata:
+  name: all
+  namespace: {{ .Values.namespace }}
+spec:
+  namespaceSelector:
+    matchExpressions:
+      - {key: "kubernetes.io/metadata.name", operator: In, values: ["{{ .Values.namespace }}"]}
+
+  selector:
+    matchExpressions:
+      - {key: "app", operator: In, values: ["decode","encode","frontend"]}
+
+  relabelings:
+  - action: replace
+    sourceLabels:
+    - __meta_kubernetes_namespace
+    targetLabel: namespace
+  - action: replace
+    sourceLabels:
+    - __meta_kubernetes_pod_node_name
+    targetLabel: node
+  - action: replace
+    targetLabel: hardcodedlabel
+    replacement: hardcodedvalue

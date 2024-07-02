@@ -2,30 +2,30 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  namespace: pi
-  name: pi-db
+  name: db
   labels:
-    app: pi-db
+    app: db
+  namespace: {{ .Values.namespace }}
 spec:
   selector:
     matchLabels:
-      app: pi-db
+      app: db
   replicas: 2
   template:
     metadata:
       labels:
-        app: pi-db
+        app: db
     spec:
       containers:
-      - name: pi-db
-        image: nickolivera296/prometheus-instrumentation:aa77765cd18b
+      - name: db
+        image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
         env:
           - name: ENCODE_HOST
-            value: "pi-encode.pi.svc.cluster.local:8080"
+            value: encode.{{ .Values.namespace }}.svc.cluster.local:8080
           - name: DECODE_HOST
-            value: "pi-decode.pi.svc.cluster.local:8080"
+            value: decode.{{ .Values.namespace }}.svc.cluster.local:8080
           - name: DB_HOST
-            value: "pi-db.pi.svc.cluster.local:8080"
+            value: db.{{ .Values.namespace }}.svc.cluster.local:8080
         ports:
         - name: web
           containerPort: 8080
@@ -34,9 +34,9 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: pi-db
-  name: pi-db
-  namespace: pi
+    app: db
+  name: db
+  namespace: {{ .Values.namespace }}
 spec:
   ports:
   - name: web
@@ -44,4 +44,4 @@ spec:
     protocol: TCP
     targetPort: web
   selector:
-    app: pi-db
+    app: db
