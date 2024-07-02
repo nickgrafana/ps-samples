@@ -1,0 +1,47 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: encode
+  labels:
+    app: encode
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: encode
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: encode
+    spec:
+      containers:
+      - name: encode
+        image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+        env:
+          - name: ENCODE_HOST
+            value: encode.{{ .Values.namespace }}.svc.cluster.local:8080
+          - name: DECODE_HOST
+            value: decode.{{ .Values.namespace }}.svc.cluster.local:8080
+          - name: DB_HOST
+            value: db.{{ .Values.namespace }}.svc.cluster.local:8080
+        ports:
+        - name: web
+          containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: encode
+  name: encode
+  namespace: {{ .Values.namespace }}
+spec:
+  ports:
+  - name: web
+    port: 8080
+    protocol: TCP
+    targetPort: web
+  selector:
+    app: encode

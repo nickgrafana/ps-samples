@@ -2,8 +2,8 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: pi-load
-  namespace: pi
+  name: load
+  namespace: {{ .Values.namespace }}
 data:
   conceal.sh: |-
     #!/bin/sh
@@ -13,7 +13,7 @@ data:
             C=$((1 + $RANDOM % 5))
             S=$((1 + $RANDOM % 5))
             echo $N $C $S
-            ab -n $N -c $C -l -d -S -q http://pi-frontend:8080/conceal
+            ab -n $N -c $C -l -d -S -q http://frontend:8080/conceal
             sleep $S
         done
   show.sh: |-
@@ -24,47 +24,36 @@ data:
             C=$((1 + $RANDOM % 5))
             S=$((1 + $RANDOM % 5))
             echo $N $C $S
-            ab -n $N -c $C -l -d -S -q http://pi-frontend:8080/show
-            sleep $S
-        done
-  logs.sh: |-
-    #!/bin/sh
-    while true
-        do
-            N=$((1 + $RANDOM % 20))
-            C=$((1 + $RANDOM % 5))
-            S=$((1 + $RANDOM % 5))
-            echo $N $C $S
-            ab -n $N -c $C -l -d -S -q http://pi-logs.pi-logs.svc.cluster.local:8080/logs
+            ab -n $N -c $C -l -d -S -q http://frontend:8080/show
             sleep $S
         done
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  namespace: pi
-  name: pi-load
+  name: load
   labels:
-    app: pi-load
+    app: load
+  namespace: {{ .Values.namespace }}
 spec:
   selector:
     matchLabels:
-      app: pi-load
+      app: load
   replicas: 1
   template:
     metadata:
       labels:
-        app: pi-load
+        app: load
     spec:
       containers:
-        - name: pi-load
+        - name: load
           image: alpine:latest
           command: ["/bin/sh"]
-          args: ["-c", "apk add curl && apk add apache2-utils && apk add parallel && mkdir -p /root/.parallel && touch /root/.parallel/will-cite && parallel -j 3 /bin/sh ::: /etc/config/logs.sh /etc/config/show.sh /etc/config/conceal.sh"]
+          args: ["-c", "apk add curl && apk add apache2-utils && apk add parallel && mkdir -p /root/.parallel && touch /root/.parallel/will-cite && parallel -j 3 /bin/sh ::: /etc/config/show.sh /etc/config/conceal.sh"]
           volumeMounts:
           - name: config-volume
             mountPath: /etc/config
       volumes:
         - name: config-volume
           configMap:
-            name: pi-load
+            name: load

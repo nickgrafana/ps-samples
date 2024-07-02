@@ -1,0 +1,17 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  labels:
+    app.kubernetes.io/name: podmonitor
+  name: podmonitor
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    matchExpressions:
+      - {key: "app", operator: In, values: ["db","decode","encode","frontend"]}
+  namespaceSelector:
+    matchNames:
+      - {{ .Values.namespace }}
+  podMetricsEndpoints:
+    - port: web
