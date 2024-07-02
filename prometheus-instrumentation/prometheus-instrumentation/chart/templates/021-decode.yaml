@@ -20,6 +20,8 @@ spec:
       - name: decode
         image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
         env:
+          - name: RELEASE
+            value: {{ .Release.Name }}
           - name: ENCODE_HOST
             value: encode.{{ .Values.namespace }}.svc.cluster.local:8080
           - name: DECODE_HOST
