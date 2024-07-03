@@ -224,7 +224,6 @@ func main() {
 
 	reg := prometheus.NewRegistry()
 	reg.MustRegister(requestCounter)
-	reg.MustRegister(okCounter)
 	reg.MustRegister(errorCounter)
 	reg.MustRegister(totalTimeSpentHistogram)
 	reg.MustRegister(memoryUsageHistogram)

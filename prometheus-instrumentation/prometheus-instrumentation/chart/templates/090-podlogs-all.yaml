@@ -2,7 +2,7 @@
 apiVersion: monitoring.grafana.com/v1alpha2
 kind: PodLogs
 metadata:
-  name: all
+  name: {{ .Release.Name }}-all
   namespace: {{ .Values.namespace }}
 spec:
   namespaceSelector:

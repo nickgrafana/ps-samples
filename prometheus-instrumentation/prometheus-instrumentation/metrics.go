@@ -11,7 +11,7 @@ import (
 
 var (
 	timeSpentSummary = prometheus.NewSummaryVec(prometheus.SummaryOpts{
-		Name: "time_spent_summary_seconds",
+		Name: fmt.Sprintf("%s_time_spent_summary_seconds", GetEnv("RELEASE", "metric")),
 		Objectives: map[float64]float64{
 			0.5:  0.05,
 			0.9:  0.01,
@@ -21,7 +21,7 @@ var (
 		[]string{"path"},
 	)
 	totalTimeSpentSummary = prometheus.NewSummaryVec(prometheus.SummaryOpts{
-		Name: "total_time_spent_summary_seconds",
+		Name: fmt.Sprintf("%s_total_time_spent_summary_seconds", GetEnv("RELEASE", "metric")),
 		Objectives: map[float64]float64{
 			0.5:  0.05,
 			0.9:  0.01,
@@ -31,19 +31,19 @@ var (
 		[]string{"path"},
 	)
 	timeSpentHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Name:    "time_spent_histogram_seconds",
+		Name:    fmt.Sprintf("%s_time_spent_histogram_seconds", GetEnv("RELEASE", "metric")),
 		Buckets: []float64{0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1},
 	},
 		[]string{"path"},
 	)
 	totalTimeSpentHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Name:    "total_time_spent_histogram_seconds",
+		Name:    fmt.Sprintf("%s_total_time_spent_histogram_seconds", GetEnv("RELEASE", "metric")),
 		Buckets: []float64{0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1},
 	},
 		[]string{"path"},
 	)
 	memoryUsageSummary = prometheus.NewSummaryVec(prometheus.SummaryOpts{
-		Name: "memory_usage_summary_bytes",
+		Name: fmt.Sprintf("%s_memory_usage_summary_bytes", GetEnv("RELEASE", "metric")),
 		Objectives: map[float64]float64{
 			0.5:  0.05,
 			0.9:  0.01,
@@ -54,31 +54,25 @@ var (
 	)
 	memoryUsageGauge = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Name: "memory_usage_gauge_bytes",
+			Name: fmt.Sprintf("%s_memory_usage_gauge_bytes", GetEnv("RELEASE", "metric")),
 		},
 		[]string{"path"},
 	)
 	memoryUsageHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Name:    "memory_usage_histogram_bytes",
+		Name:    fmt.Sprintf("%s_memory_usage_histogram_bytes", GetEnv("RELEASE", "metric")),
 		Buckets: prometheus.LinearBuckets(0, 250000, 5),
 	},
 		[]string{"path"},
 	)
 	requestCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "request_count",
+			Name: fmt.Sprintf("%s_request_count", GetEnv("RELEASE", "metric")),
 		},
 		[]string{"path"},
 	)
 	errorCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "request_error_count",
-		},
-		[]string{"path"},
-	)
-	okCounter = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "request_ok_count",
+			Name: fmt.Sprintf("%s_request_error_count", GetEnv("RELEASE", "metric")),
 		},
 		[]string{"path"},
 	)
@@ -86,9 +80,7 @@ var (
 
 func measure(service string, timeSpent, totalTimeSpent, memory float64, status int) {
 
-	if status == 200 {
-		okCounter.With(prometheus.Labels{"path": service}).Inc()
-	} else {
+	if status != 200 {
 		errorCounter.With(prometheus.Labels{"path": service}).Inc()
 	}
 	requestCounter.With(prometheus.Labels{"path": service}).Inc()
