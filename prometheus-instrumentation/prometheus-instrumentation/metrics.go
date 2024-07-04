@@ -2,11 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/prometheus/client_golang/prometheus"
-	log "github.com/sirupsen/logrus"
 	"math/rand"
 	"strconv"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	log "github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var (
@@ -78,11 +80,12 @@ var (
 	)
 )
 
-func measure(service string, timeSpent, totalTimeSpent, memory float64, status int) {
-
+func measure(service string, timeSpent, totalTimeSpent, memory float64, status int, span trace.Span) {
+	span.AddEvent("measure")
 	if status != 200 {
 		errorCounter.With(prometheus.Labels{"path": service}).Inc()
 	}
+
 	requestCounter.With(prometheus.Labels{"path": service}).Inc()
 	memoryUsageGauge.With(prometheus.Labels{"path": service}).Set(memory)
 
@@ -103,6 +106,8 @@ func measure(service string, timeSpent, totalTimeSpent, memory float64, status i
 		"response_time":       fmt.Sprintf("%.3f", timeSpent),
 		"response_time_total": fmt.Sprintf("%.3f", totalTimeSpent),
 		"http_code":           status,
+		"trace_id":            span.SpanContext().TraceID().String(),
+		"span_id":             span.SpanContext().SpanID().String(),
 	}
 
 	switch status {
@@ -121,5 +126,6 @@ func measure(service string, timeSpent, totalTimeSpent, memory float64, status i
 		x := log.WithFields(fields)
 		x.Panic()
 	}
+	span.AddEvent("end measure")
 
 }

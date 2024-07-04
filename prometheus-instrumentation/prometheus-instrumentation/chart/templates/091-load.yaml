@@ -9,9 +9,9 @@ data:
     #!/bin/sh
     while true
         do
-            N=$((1 + $RANDOM % 2))
+            N=$((1 + $RANDOM % 1))
             C=$((1 + $RANDOM % 5))
-            S=$((1 + $RANDOM % 5))
+            S=$((1 + $RANDOM % 10))
             echo $N $C $S
             ab -n $N -c $C -l -d -S -q http://frontend:8080/conceal
             sleep $S
@@ -20,9 +20,9 @@ data:
     #!/bin/sh
     while true
         do
-            N=$((1 + $RANDOM % 2))
+            N=$((1 + $RANDOM % 1))
             C=$((1 + $RANDOM % 5))
-            S=$((1 + $RANDOM % 5))
+            S=$((1 + $RANDOM % 10))
             echo $N $C $S
             ab -n $N -c $C -l -d -S -q http://frontend:8080/show
             sleep $S

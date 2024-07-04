@@ -22,6 +22,10 @@ spec:
         env:
           - name: RELEASE
             value: {{ .Release.Name }}
+          - name: SERVICE
+            value: decode
+          - name: TEMPO_HOST
+            value: http://alloy.alloy.svc.cluster.local:4318/v1/traces
           - name: ENCODE_HOST
             value: encode.{{ .Values.namespace }}.svc.cluster.local:8080
           - name: DECODE_HOST
