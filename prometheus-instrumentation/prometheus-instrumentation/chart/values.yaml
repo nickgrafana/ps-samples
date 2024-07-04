@@ -1,5 +1,5 @@
-namespace: d
+namespace: f
 
 image:
   repository: nickolivera296/prometheus-instrumentation
-  tag: 3e390c98adab
+  tag: 6b50fae7e930
