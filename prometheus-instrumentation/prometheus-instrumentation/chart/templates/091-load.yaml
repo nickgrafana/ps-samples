@@ -10,8 +10,9 @@ data:
     while true
         do
             N=$((1 + $RANDOM % 1))
-            C=$((1 + $RANDOM % 5))
-            S=$((1 + $RANDOM % 10))
+            C=$((1 + $RANDOM % 1))
+            S=$((60 + $RANDOM % 60))
+            S=5
             echo $N $C $S
             ab -n $N -c $C -l -d -S -q http://frontend:8080/conceal
             sleep $S
@@ -21,8 +22,9 @@ data:
     while true
         do
             N=$((1 + $RANDOM % 1))
-            C=$((1 + $RANDOM % 5))
-            S=$((1 + $RANDOM % 10))
+            C=$((1 + $RANDOM % 1))
+            S=$((1 + $RANDOM % 60))
+            S=5
             echo $N $C $S
             ab -n $N -c $C -l -d -S -q http://frontend:8080/show
             sleep $S
@@ -46,7 +48,7 @@ spec:
         app: load
     spec:
       containers:
-        - name: load
+        - name: load-{{ .Release.Revision }}
           image: alpine:latest
           command: ["/bin/sh"]
           args: ["-c", "apk add curl && apk add apache2-utils && apk add parallel && mkdir -p /root/.parallel && touch /root/.parallel/will-cite && parallel -j 3 /bin/sh ::: /etc/config/show.sh /etc/config/conceal.sh"]

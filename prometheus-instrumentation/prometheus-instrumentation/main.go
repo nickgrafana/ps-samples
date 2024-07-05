@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/carlmjohnson/requests"
 	"github.com/gorilla/mux"
 	"github.com/mroth/weightedrand/v2"
@@ -56,7 +55,6 @@ func db(w http.ResponseWriter, r *http.Request) {
 	span := trace.SpanFromContext(r.Context())
 	defer span.End()
 
-	fmt.Println(time.Duration(randFloatExclusiveMinInclusiveMax(0, 0.1)*1000) * time.Millisecond)
 	start := time.Now()
 
 	sleep := getResponseTime((*ChooseRuntime).Pick())

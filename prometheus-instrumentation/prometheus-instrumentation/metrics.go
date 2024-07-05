@@ -108,6 +108,9 @@ func measure(service string, timeSpent, totalTimeSpent, memory float64, status i
 		"http_code":           status,
 		"trace_id":            span.SpanContext().TraceID().String(),
 		"span_id":             span.SpanContext().SpanID().String(),
+
+		"traceID": span.SpanContext().TraceID().String(),
+		"spanID":  span.SpanContext().SpanID().String(),
 	}
 
 	switch status {
