@@ -1,0 +1,68 @@
+//discover targets "/metrics"
+discovery.kubernetes "k8s_pods" {
+	role = "pod"
+}
+
+//drop targets within namespaces (alloy, kube-system)
+discovery.relabel "k8s_pods" {
+	targets = discovery.kubernetes.k8s_pods.targets
+
+	rule {
+		source_labels = ["__meta_kubernetes_namespace"]
+		regex         = "alloy"
+		action        = "drop"
+	}
+
+	rule {
+		source_labels = ["__meta_kubernetes_namespace"]
+		regex         = "kube-system"
+		action        = "drop"
+	}
+}
+
+//scrape metrics from remaining targets
+prometheus.scrape "k8s_pods" {
+	targets    = discovery.relabel.k8s_pods.output
+	forward_to = [prometheus.relabel.k8s_pods.receiver]
+}
+
+//drop metrics (that start with go, awscni, coredns, grafana)
+prometheus.relabel "k8s_pods" {
+	forward_to = [prometheus.remote_write.grafanacloud.receiver]
+
+	rule {
+		action        = "drop"
+		regex         = "^go_.*$"
+		source_labels = ["__name__"]
+	}
+
+	rule {
+		action        = "drop"
+		regex         = "^awscni_.*$"
+		source_labels = ["__name__"]
+	}
+
+	rule {
+		action        = "drop"
+		regex         = "^coredns_.*$"
+		source_labels = ["__name__"]
+	}
+
+	rule {
+		action        = "drop"
+		regex         = "^grafana_.*$"
+		source_labels = ["__name__"]
+	}
+}
+
+//push to Grafana Cloud what is left
+prometheus.remote_write "grafanacloud" {
+	endpoint {
+		url = "prometheus-endpoint-example-123.grafana.net"
+
+		basic_auth {
+			username = "user"
+			password = "password"
+		}
+	}
+}
